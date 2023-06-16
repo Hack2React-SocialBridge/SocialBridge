@@ -34,3 +34,16 @@ class UserCreateSchema(BaseModel):
     password: str
     first_name: str
     last_name: str
+
+
+class EmailConfirmationSchema(BaseModel):
+    key: str
+
+
+class RequestPasswordResetSchema(BaseModel):
+    email: str
+
+
+class PasswordResetSchema(BaseModel):
+    key: str
+    new_password: str

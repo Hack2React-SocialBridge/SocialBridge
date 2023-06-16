@@ -4,13 +4,16 @@ from email.mime.text import MIMEText
 from os import environ
 
 from fastapi import Depends, HTTPException, status, APIRouter, Body
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from itsdangerous import BadSignature, SignatureExpired
 
 from social_bridge.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
     create_access_token,
     get_password_hash,
+    confirm_token,
 )
 from social_bridge.database import get_db
 from social_bridge.schemas.users import (
@@ -18,12 +21,15 @@ from social_bridge.schemas.users import (
     TokenSchema,
     UserSchema,
     UserCreateSchema,
+    EmailConfirmationSchema,
+    RequestPasswordResetSchema,
+    PasswordResetSchema,
 )
-from social_bridge.repositories.users import create_one
+from social_bridge.schemas.common import DetailsResponseSchema
+from social_bridge.repositories.users import create_one, update_one, get_user_by_email, get_active_user_by_email
 from social_bridge.mail import send_mail
 from social_bridge.jinja_config import env
 from social_bridge.auth import generate_confirmation_token
-
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -70,3 +76,44 @@ async def register(user: UserCreateSchema = Body(...), db: Session = Depends(get
     send_mail.delay(user.email, message.as_string())
 
     return db_user
+
+
+@router.post("/confirm", status_code=200)
+async def confirm_user(token: EmailConfirmationSchema = Body(...),
+                       db: Session = Depends(get_db)) -> UserSchema | DetailsResponseSchema:
+    try:
+        email = confirm_token(token.key)
+        return update_one(db, user_email=email, disabled=False)
+    except (BadSignature, SignatureExpired):
+        return JSONResponse(DetailsResponseSchema(detail="Invalid token").dict(), status_code=400)
+
+
+@router.post("/password-reset", status_code=200)
+async def password_reset(user: RequestPasswordResetSchema = Body(...),
+                         db: Session = Depends(get_db)) -> DetailsResponseSchema:
+    db_user = get_active_user_by_email(db, user.email)
+    if db_user:
+        confirmation_token = generate_confirmation_token(user.email)
+        url_template = env.from_string(environ.get("PASSWORD_RESET_URL"))
+        reset_url = url_template.render(confirmation_token=confirmation_token)
+
+        template = env.get_template("password_reset.html")
+        msg_content = template.render(reset_url=reset_url)
+        message = MIMEMultipart("alternative")
+        message["Subject"] = "social_bridge account - password reset"
+        message["From"] = environ.get("SMTP_EMAIL")
+        message["To"] = user.email
+        message.attach(MIMEText(msg_content, "html"))
+        send_mail.delay(user.email, message.as_string())
+    return DetailsResponseSchema(
+        detail="Password reset instructions have been sent to the provided email address.")
+
+
+@router.post("/password-reset-confirm", status_code=200)
+async def password_reset_confirm(body: PasswordResetSchema = Body(...), db: Session = Depends(get_db)) -> UserSchema:
+    try:
+        email = confirm_token(body.key)
+        new_password_hash = get_password_hash(body.new_password)
+        return update_one(db, user_email=email, hashed_password=new_password_hash)
+    except (BadSignature, SignatureExpired):
+        return JSONResponse(DetailsResponseSchema(detail="Invalid token").dict(), status_code=400)
