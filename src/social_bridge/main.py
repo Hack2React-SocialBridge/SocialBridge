@@ -2,8 +2,8 @@ from fastapi import FastAPI
 
 
 app = FastAPI(
-    title="SocialBridge",
-    description="",
+    title="social_bridge",
+    description="Let's clean up your neighbourhood together",
     version="0.0.1",
     contact={"name": "Roland Sobczak", "email": "rolandsobczak@icloud.com"},
 )
