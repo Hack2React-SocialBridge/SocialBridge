@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "leaf"
+name = "SocialBridge"
 version = "0.1.0"
 description = ""
 authors = ["rolandsobczak <rolandsobczak@icloud.com>"]
