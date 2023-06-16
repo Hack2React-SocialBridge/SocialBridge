@@ -1,9 +1,11 @@
+from pathlib import Path
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from os import environ
 
-from fastapi import Depends, HTTPException, status, APIRouter, Body
+from fastapi import Depends, HTTPException, status, APIRouter, Body, UploadFile
+from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from itsdangerous import BadSignature, SignatureExpired
@@ -16,6 +18,7 @@ from social_bridge.auth import (
     confirm_token,
 )
 from social_bridge.database import get_db
+from social_bridge.dependencies import get_image_size, get_current_active_user
 from social_bridge.schemas.users import (
     LoginSchema,
     TokenSchema,
@@ -25,13 +28,19 @@ from social_bridge.schemas.users import (
     RequestPasswordResetSchema,
     PasswordResetSchema,
 )
-from social_bridge.schemas.common import DetailsResponseSchema
 from social_bridge.repositories.users import create_one, update_one, get_user_by_email, get_active_user_by_email
-from social_bridge.mail import send_mail
+from social_bridge.tasks import resize_image, send_mail
 from social_bridge.jinja_config import env
+from social_bridge.media import flush_old_media_resources, create_media_resource, get_media_image_url, get_resource_absolute_path
 from social_bridge.auth import generate_confirmation_token
+from social_bridge.models import User
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+MEDIA_FOLDER = environ.get("MEDIA_FOLDER")
+MEDIA_BASE_URL = environ.get("MEDIA_BASE_URL")
+AVAILABLE_IMAGE_SIZES = environ.get("AVAILABLE_IMAGE_SIZES")
+IMAGE_SIZES = {size: environ.get(f"{size.upper()}_IMAGE_SIZE").split("x") for size in AVAILABLE_IMAGE_SIZES.split(",")}
 
 
 @router.post("/token", response_model=TokenSchema)
@@ -80,17 +89,17 @@ async def register(user: UserCreateSchema = Body(...), db: Session = Depends(get
 
 @router.post("/confirm", status_code=200)
 async def confirm_user(token: EmailConfirmationSchema = Body(...),
-                       db: Session = Depends(get_db)) -> UserSchema | DetailsResponseSchema:
+                       db: Session = Depends(get_db)) -> UserSchema:
     try:
         email = confirm_token(token.key)
         return update_one(db, user_email=email, disabled=False)
     except (BadSignature, SignatureExpired):
-        return JSONResponse(DetailsResponseSchema(detail="Invalid token").dict(), status_code=400)
+        raise HTTPException(status_code=400, detail="Invalid token")
 
 
 @router.post("/password-reset", status_code=200)
 async def password_reset(user: RequestPasswordResetSchema = Body(...),
-                         db: Session = Depends(get_db)) -> DetailsResponseSchema:
+                         db: Session = Depends(get_db)):
     db_user = get_active_user_by_email(db, user.email)
     if db_user:
         confirmation_token = generate_confirmation_token(user.email)
@@ -105,8 +114,8 @@ async def password_reset(user: RequestPasswordResetSchema = Body(...),
         message["To"] = user.email
         message.attach(MIMEText(msg_content, "html"))
         send_mail.delay(user.email, message.as_string())
-    return DetailsResponseSchema(
-        detail="Password reset instructions have been sent to the provided email address.")
+    return JSONResponse(
+        {"detail": "Password reset instructions have been sent to the provided email address."}, status_code=200)
 
 
 @router.post("/password-reset-confirm", status_code=200)
@@ -116,4 +125,21 @@ async def password_reset_confirm(body: PasswordResetSchema = Body(...), db: Sess
         new_password_hash = get_password_hash(body.new_password)
         return update_one(db, user_email=email, hashed_password=new_password_hash)
     except (BadSignature, SignatureExpired):
-        return JSONResponse(DetailsResponseSchema(detail="Invalid token").dict(), status_code=400)
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+
+@router.put("/user-image")
+async def update_user_image(image: UploadFile, current_user: User = Depends(get_current_active_user),
+                            image_size: str = Depends(get_image_size), db: Session = Depends(get_db)):
+    image_format = image.filename.split(".")[-1]
+    relative_image_path = Path(f"{current_user.id}/user_image.{image_format}")
+    absolute_image_path = get_resource_absolute_path(relative_image_path)
+
+    flush_old_media_resources(absolute_image_path)
+    create_media_resource(absolute_image_path, await image.read())
+    resize_image.delay(str(absolute_image_path))
+
+    db_user = update_one(db, current_user.email, profile_image=str(relative_image_path.name))
+    user_data = db_user.__dict__
+    del user_data["profile_image"]
+    return UserSchema(**db_user.__dict__, profile_image=get_media_image_url(relative_image_path, image_size))
