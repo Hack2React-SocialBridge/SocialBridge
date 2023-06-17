@@ -24,6 +24,16 @@ class UserTypes(Enum):
     ADMIN = 8
 
 
+class NGOMembership(TimestampedModel):
+    __tablename__ = "ngo_memberships"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="memberships")
+    ngo_id = Column(Integer, ForeignKey("ngo.id"))
+    ngo = relationship("NGO", back_populates="ngo")
+
+
 class User(TimestampedModel):
     __tablename__ = "users"
 
@@ -35,10 +45,19 @@ class User(TimestampedModel):
     disabled = Column(Boolean)
     profile_image = Column(String)
     account_type = Column(Integer)
+    ngo = relationship("NGOMemberships", secondary=NGOMembership, back_populates="user")
 
 
-# class NGO(TimestampedModel):
-#     __tablename__ = "ngo"
+class NGO(TimestampedModel):
+    __tablename__ = "ngo"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    name = Column(String)
+    image = Column(String)
+    description = Column(String)
+    members = relationship("NGOMemberships", secondary=NGOMembership, back_populates="ngo")
+    tax_number = Column(String)
+    regon = Column(String)
 
 
 
