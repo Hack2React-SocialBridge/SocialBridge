@@ -87,6 +87,18 @@ class Company(TimestampedModel):
     regon = Column(String)
 
 
+class Project(TimestampedModel):
+    __tablename__ = "projects"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    name = Column(String)
+    description = Column(String)
+    ngo_id = Column(Integer, ForeignKey("ngo.id"))
+    ngo = relationship("NGO", back_populates="projects", uselist=False)
+    event_id =Column(Integer, ForeignKey("events.id"))
+    event = relationship("Event", back_populates="projects", uselist=False)
+
+
 class Event(TimestampedModel):
     __tablename__ = "events"
 
@@ -98,6 +110,7 @@ class Event(TimestampedModel):
     ngo_id = Column(Integer, ForeignKey("ngo.id"))
     ngo = relationship("NGO", back_populates="events", uselist=False)
     post = relationship("Post", back_populates="event", uselist=False)
+    project = relationship("Project", back_populates="event", uselist=False)
 
 
 class Post(TimestampedModel):
