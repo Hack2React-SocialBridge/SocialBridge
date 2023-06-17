@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from social_bridge.routers import users, ngo
+from social_bridge.routers import users, ngo, posts
 from social_bridge.dependencies import get_settings
 
 
@@ -15,4 +15,5 @@ app = FastAPI(
 )
 app.include_router(users.router)
 app.include_router(ngo.router)
+app.include_router(posts.router)
 app.mount(settings.MEDIA_BASE_URL, StaticFiles(directory=settings.MEDIA_FOLDER), name="media")

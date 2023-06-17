@@ -97,7 +97,7 @@ class Project(TimestampedModel):
     ngo_id = Column(Integer, ForeignKey("ngo.id"))
     ngo = relationship("NGO", back_populates="projects", uselist=False)
     events = relationship("Event", back_populates="project")
-    post = relationship("Post", back_populates="project")
+    posts = relationship("Post", back_populates="project")
 
 
 class Event(TimestampedModel):

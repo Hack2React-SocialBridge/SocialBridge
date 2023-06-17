@@ -4,6 +4,10 @@ from sqlalchemy import update
 from social_bridge.models import NGO
 
 
+def get_one_by_id(db: Session, ngo_id: int) -> NGO | None:
+    return db.query(NGO).filter(NGO.id == ngo_id).first()
+
+
 def create_one(db: Session, **ngo_props):
     db_ngo = NGO(**ngo_props)
     db.add(db_ngo)
