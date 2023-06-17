@@ -69,6 +69,8 @@ class NGO(TimestampedModel):
     members = relationship("NGOMembership", secondary=NGOMembership, back_populates="ngo")
     tax_number = Column(String)
     regon = Column(String)
+    events = relationship("Event", back_populates="ngo")
+    posts = relationship("Post", back_populates="ngo")
 
 
 class Company(TimestampedModel):
@@ -81,3 +83,16 @@ class Company(TimestampedModel):
     members = relationship("CompanyMembership", secondary=CompanyMembership, back_populates="company")
     tax_number = Column(String)
     regon = Column(String)
+
+
+class Event(TimestampedModel):
+    __tablename__ = "events"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    date = Column(DateTime)
+    name = Column(String)
+    description = Column(String)
+    image = Column(Integer)
+    ngo_id = Column(Integer, ForeignKey("ngo.id"))
+    ngo = relationship("NGO", back_populates="events", uselist=False)
+
