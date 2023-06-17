@@ -1,9 +1,9 @@
 from pathlib import Path
-from fastapi import APIRouter, Depends, Body, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from social_bridge.dependencies import get_settings, get_db, get_image_size
-from social_bridge.schemas.ngo import NGOSchema, NGOCreationSchema
+from social_bridge.schemas.ngo import NGOSchema
 from social_bridge.config import Settings
 from social_bridge.media import get_media_image_url, get_resource_absolute_path, flush_old_media_resources, \
     create_media_resource
