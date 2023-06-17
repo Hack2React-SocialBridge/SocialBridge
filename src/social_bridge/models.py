@@ -95,4 +95,16 @@ class Event(TimestampedModel):
     image = Column(Integer)
     ngo_id = Column(Integer, ForeignKey("ngo.id"))
     ngo = relationship("NGO", back_populates="events", uselist=False)
+    post = relationship("Post", back_populates="event", uselist=False)
 
+
+class Post(TimestampedModel):
+    __tablename__ = "posts"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    content = Column(String)
+    image = Column(String)
+    ngo_id = Column(Integer, ForeignKey("ngo.id"))
+    ngo = relationship("NGO", back_populates="posts", uselist=False)
+    event_id = Column(Integer, ForeignKey("events.id"))
+    event = relationship("Event", back_populates="post", uselist=False)
