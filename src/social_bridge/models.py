@@ -1,3 +1,5 @@
+from enum import Enum
+
 from sqlalchemy import Boolean, Column, Integer, String, DateTime, func, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -15,6 +17,13 @@ class TimestampedModel(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class UserTypes(Enum):
+    PUBLIC = 1
+    NGO = 2
+    BUSINESS = 4
+    ADMIN = 8
+
+
 class User(TimestampedModel):
     __tablename__ = "users"
 
@@ -25,6 +34,7 @@ class User(TimestampedModel):
     last_name = Column(String)
     disabled = Column(Boolean)
     profile_image = Column(String)
+    account_type = Column(Integer)
 
 
 # class NGO(TimestampedModel):
