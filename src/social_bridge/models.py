@@ -29,9 +29,9 @@ class NGOMembership(TimestampedModel):
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="memberships")
+    user = relationship("User", back_populates="ngo")
     ngo_id = Column(Integer, ForeignKey("ngo.id"))
-    ngo = relationship("NGO", back_populates="ngo")
+    ngo = relationship("NGO", back_populates="members")
 
 
 class CompanyMembership(TimestampedModel):
@@ -39,9 +39,9 @@ class CompanyMembership(TimestampedModel):
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="memberships")
+    user = relationship("User", back_populates="company")
     company_id = Column(Integer, ForeignKey("companies.id"))
-    company = relationship("Company", back_populates="company")
+    company = relationship("Company", back_populates="members")
 
 
 class User(TimestampedModel):
@@ -55,10 +55,10 @@ class User(TimestampedModel):
     disabled = Column(Boolean)
     profile_image = Column(String)
     account_type = Column(Integer)
-    ngo = relationship("NGOMembership", secondary=NGOMembership, back_populates="user")
-    company = relationship("CompanyMembership", secondary=CompanyMembership, back_populates="user")
+    ngo = relationship("NGOMembership", back_populates="user")
+    company = relationship("CompanyMembership", back_populates="user")
     comments = relationship("Comment", back_populates="user")
-    likes = relationship("Likes", back_populates="user")
+    likes = relationship("Like", back_populates="user")
 
 
 class NGO(TimestampedModel):
@@ -68,11 +68,12 @@ class NGO(TimestampedModel):
     name = Column(String)
     image = Column(String)
     description = Column(String)
-    members = relationship("NGOMembership", secondary=NGOMembership, back_populates="ngo")
+    members = relationship("NGOMembership", back_populates="ngo")
     tax_number = Column(String)
     regon = Column(String)
     events = relationship("Event", back_populates="ngo")
     posts = relationship("Post", back_populates="ngo")
+    projects = relationship("Project", back_populates="ngo")
 
 
 class Company(TimestampedModel):
@@ -82,7 +83,7 @@ class Company(TimestampedModel):
     name = Column(String)
     image = Column(String)
     description = Column(String)
-    members = relationship("CompanyMembership", secondary=CompanyMembership, back_populates="company")
+    members = relationship("CompanyMembership", back_populates="company")
     tax_number = Column(String)
     regon = Column(String)
 
@@ -95,8 +96,8 @@ class Project(TimestampedModel):
     description = Column(String)
     ngo_id = Column(Integer, ForeignKey("ngo.id"))
     ngo = relationship("NGO", back_populates="projects", uselist=False)
-    event_id =Column(Integer, ForeignKey("events.id"))
-    event = relationship("Event", back_populates="projects", uselist=False)
+    event_id = Column(Integer, ForeignKey("events.id"))
+    event = relationship("Event", back_populates="project")
 
 
 class Event(TimestampedModel):
@@ -124,7 +125,7 @@ class Post(TimestampedModel):
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", back_populates="post", uselist=False)
     comments = relationship("Comment", back_populates="post")
-    likes = relationship("Likes", back_populates="post")
+    likes = relationship("Like", back_populates="post")
 
 
 class Comment(TimestampedModel):
@@ -133,7 +134,7 @@ class Comment(TimestampedModel):
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     content = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("Post", back_populates="comments", uselist=False)
+    user = relationship("User", back_populates="comments", uselist=False)
     post_id = Column(Integer, ForeignKey("posts.id"))
     post = relationship("Post", back_populates="comments", uselist=False)
 
@@ -143,7 +144,7 @@ class Like(TimestampedModel):
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("Post", back_populates="comments", uselist=False)
+    user = relationship("User", back_populates="likes", uselist=False)
     post_id = Column(Integer, ForeignKey("posts.id"))
-    post = relationship("Post", back_populates="comments", uselist=False)
+    post = relationship("Post", back_populates="likes", uselist=False)
 
