@@ -57,6 +57,7 @@ class User(TimestampedModel):
     account_type = Column(Integer)
     ngo = relationship("NGOMembership", secondary=NGOMembership, back_populates="user")
     company = relationship("CompanyMembership", secondary=CompanyMembership, back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 
 class NGO(TimestampedModel):
@@ -108,3 +109,15 @@ class Post(TimestampedModel):
     ngo = relationship("NGO", back_populates="posts", uselist=False)
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", back_populates="post", uselist=False)
+    comments = relationship("Comment", back_populates="post")
+
+
+class Comment(TimestampedModel):
+    __tablename__ = "comments"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    content = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("Post", back_populates="comments", uselist=False)
+    post_id = Column(Integer, ForeignKey("posts.id"))
+    post = relationship("Post", back_populates="comments", uselist=False)
