@@ -98,6 +98,7 @@ class Project(TimestampedModel):
     ngo = relationship("NGO", back_populates="projects", uselist=False)
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", back_populates="project")
+    post = relationship("Post", back_populates="project")
 
 
 class Event(TimestampedModel):
@@ -126,6 +127,8 @@ class Post(TimestampedModel):
     event = relationship("Event", back_populates="post", uselist=False)
     comments = relationship("Comment", back_populates="post")
     likes = relationship("Like", back_populates="post")
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    project = relationship("Project", back_populates="posts", uselist=False)
 
 
 class Comment(TimestampedModel):
