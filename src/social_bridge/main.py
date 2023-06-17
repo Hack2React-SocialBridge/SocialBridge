@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from social_bridge.routers import users, ngo, posts
 from social_bridge.dependencies import get_settings
 
@@ -12,6 +13,13 @@ app = FastAPI(
     description="Let's clean up your neighbourhood together",
     version="0.0.1",
     contact={"name": "Roland Sobczak", "email": "rolandsobczak@icloud.com"},
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.include_router(users.router)
 app.include_router(ngo.router)

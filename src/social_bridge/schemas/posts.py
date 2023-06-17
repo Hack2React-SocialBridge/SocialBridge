@@ -15,3 +15,5 @@ class PostSchema(BaseModel):
     image: str
     created_at: datetime
     updated_at: datetime
+    comments_count: int
+    likes_count: int

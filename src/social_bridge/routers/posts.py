@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
-from social_bridge.repositories.posts import create_one, get_post_by_id, fetch_all_posts, update_one
+from social_bridge.repositories.posts import create_one, fetch_all_posts, update_one
 from social_bridge.repositories.ngo import get_one_by_id
 from social_bridge.config import Settings
 from social_bridge.dependencies import get_settings, get_db, get_image_size
@@ -41,21 +41,30 @@ async def create_post(
     create_media_resource(absolute_image_path, await image.read())
     resize_image.delay(str(absolute_image_path), list(settings.IMAGE_SIZES.values()))
 
-    created_post, ngo = update_one(db, db_post.id, image=str(relative_image_path.name))
-    post_data = created_post.__dict__
-    del post_data["image"]
+    data = update_one(db, db_post.id, image=str(relative_image_path.name))
+    post_id, content, created_at, updated_at, post_image, \
+        ngo_id, ngo_name, ngo_image, comments_count, like_count = data
     return PostSchema(
-        **post_data,
-        image=get_media_image_url(relative_image_path, image_size, media_base_url=settings.MEDIA_BASE_URL),
+        id=post_id,
+        content=content,
+        created_at=created_at,
+        updated_at=updated_at,
+        image=get_media_image_url(
+            Path(f"{ngo_id}/posts/{post_image}"),
+            image_size,
+            media_base_url=settings.MEDIA_BASE_URL
+        ),
+        comments_count=comments_count,
+        likes_count=like_count,
         ngo=NGOProfileSchema(
-            id=ngo.id,
-            name=ngo.name,
+            id=ngo_id,
+            name=ngo_name,
             image=get_media_image_url(
-                Path(f"ngo/ngo/{ngo.image}"),
+                Path(f"ngo/{ngo_id}/{ngo_image}"),
                 image_size,
                 media_base_url=settings.MEDIA_BASE_URL),
+            )
         )
-    )
 
 
 @router.get("")
@@ -63,23 +72,27 @@ async def fetch_posts(db: Session = Depends(get_db), settings: Settings = Depend
                       image_size: int = Depends(get_image_size)):
     posts = fetch_all_posts(db)
     response_data = []
-    for post, ngo in posts:
-        post_data = post.__dict__
-        image_format = post.image.split(".")[-1]
-        del post_data["image"]
+    for data in posts:
+        post_id, content, created_at, updated_at, post_image, \
+            ngo_id, ngo_name, ngo_image, comments_count, like_count = data
         response_data.append(
             PostSchema(
-                **post_data,
+                id=post_id,
+                content=content,
+                created_at=created_at,
+                updated_at=updated_at,
                 image=get_media_image_url(
-                    Path(f"{ngo.id}/posts/{post.id}.{image_format}"),
+                    Path(f"{ngo_id}/posts/{post_image}"),
                     image_size,
                     media_base_url=settings.MEDIA_BASE_URL
                 ),
+                comments_count=comments_count,
+                likes_count=like_count,
                 ngo=NGOProfileSchema(
-                    id=ngo.id,
-                    name=ngo.name,
+                    id=ngo_id,
+                    name=ngo_name,
                     image=get_media_image_url(
-                        Path(f"ngo/ngo/{ngo.image}"),
+                        Path(f"ngo/{ngo_id}/{ngo_image}"),
                         image_size,
                         media_base_url=settings.MEDIA_BASE_URL),
                 )
