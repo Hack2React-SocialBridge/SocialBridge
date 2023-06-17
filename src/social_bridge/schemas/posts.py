@@ -6,6 +6,9 @@ from social_bridge.schemas.ngo import NGOProfileSchema
 
 
 class PostSchema(BaseModel):
+    class Config:
+        orm_mode = True
+
     id: PositiveInt
     content: str
     ngo: NGOProfileSchema
