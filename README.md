@@ -50,6 +50,7 @@
                 <a href="#example-of-microservices-architecture">Example of microservices architecture</a>
             </li>
         </ul>
+    <li><a href="#openapi">OpenAPI</a></li>
     <li><a href="#contact">Contact</a></li>
 
   </ol>
@@ -89,7 +90,7 @@ Project created within Hack2React hackathon!
 
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
+This is an example of how to set up project locally.
 To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
@@ -211,7 +212,13 @@ or just on your local machine.
 ![Micro Services Architecture Schema](https://images.contentstack.io/v3/assets/blt189c1df68c6b48d7/blt900fee914052507b/62a5f052e75cbf5ab676839d/abc_Microservices-2.png)
 
 
+## OpenAPI
 
+SocialBridge API use OpenAPI 3.0. If you already have project up and running on you local environment,
+you can open built in swagger on `http://localhost:8000/docs`. To import open api schema go to
+`http://localhost:8000/openapi.json`
+
+![Swagger](https://github.com/RolandSobczak/SocialBridge/blob/main/swagger.png?raw=true)
 
 
 
@@ -225,7 +232,7 @@ Maciej Żuk - [@linkedin_handle](https://www.linkedin.com/in/maciej-%C5%BCuk-111
 
 Mateusz Borucki - mateuszborucki1@gmail.com
 
-Roland Sobczak - [@linkedin_handle](https://www.linkedin.com/in/roland-sobczak-19911627a/) - rolandsobczak@icloud.com
+Roland Sobczak - [@linkedin_handle](https://www.linkedin.com/in/roland-sobczak/) - rolandsobczak@icloud.com
 
 
 Project Link: [https://github.com/RolandSobczak/SocialBridge](https://github.com/RolandSobczak/SocialBridge)
