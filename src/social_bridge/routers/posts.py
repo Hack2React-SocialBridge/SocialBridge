@@ -34,7 +34,7 @@ async def create_post(
     db.refresh(db_post)
 
     image_format = image.filename.split(".")[-1]
-    relative_image_path = Path(f"{ngo.id}/posts/{db_post.id}.{image_format}")
+    relative_image_path = Path(f"ngo/{ngo.id}/posts/{db_post.id}.{image_format}")
     absolute_image_path = get_resource_absolute_path(relative_image_path, media_folder=settings.MEDIA_FOLDER)
 
     flush_old_media_resources(absolute_image_path)
@@ -50,7 +50,7 @@ async def create_post(
         created_at=created_at,
         updated_at=updated_at,
         image=get_media_image_url(
-            Path(f"{ngo_id}/posts/{post_image}"),
+            Path(f"ngo/{ngo_id}/posts/{post_image}"),
             image_size,
             media_base_url=settings.MEDIA_BASE_URL
         ),
@@ -82,7 +82,7 @@ async def fetch_posts(db: Session = Depends(get_db), settings: Settings = Depend
                 created_at=created_at,
                 updated_at=updated_at,
                 image=get_media_image_url(
-                    Path(f"{ngo_id}/posts/{post_image}"),
+                    Path(f"ngo/{ngo_id}/posts/{post_image}"),
                     image_size,
                     media_base_url=settings.MEDIA_BASE_URL
                 ),
