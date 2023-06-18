@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import update, func
+from sqlalchemy import update, func, desc
 
 from social_bridge.models import Post, NGO, Comment, Like
 
@@ -51,7 +51,7 @@ def fetch_all_posts(db: Session) -> [[Post, NGO]]:
         NGO.name,
         NGO.image.label("ngo_image"),
 
-    ).all()
+    ).order_by(desc(Post.created_at)).all()
 
 
 def create_one(db: Session, **post_props) -> Post | None:
